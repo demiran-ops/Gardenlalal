@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌾 Grow a Garden</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { width: 100vw; height: 100vh; overflow: hidden; background: linear-gradient(160deg,#040e04,#091509,#040e04); font-family: 'Fredoka One', cursive; display: flex; flex-direction: column; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-thumb { background: #1a3a1a; border-radius: 2px; }
+
+@keyframes floatUp { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-80px) scale(1.2)} }
+@keyframes sway { 0%,100%{transform:rotate(-5deg)} 50%{transform:rotate(5deg)} }
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
+@keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+@keyframes fadeIn { from{opacity:0;transform:scale(0.96)} to{opacity:1;transform:scale(1)} }
+
+.float-text {
+  position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+}
+.float-item {
+  position: absolute;
+  font-family: 'Fredoka One', cursive;
+  font-size: 18px;
+  text-shadow: 0 2px 10px #000e;
+  animation: floatUp 1.4s ease-out forwards;
+  pointer-events: none; user-select: none; white-space: nowrap;
+}
+
+/* TOPBAR */
+#topbar {
+  height: 50px; min-height: 50px; flex-shrink: 0;
+  background: linear-gradient(90deg,#040e04,#091509,#040e04);
+  border-bottom: 2px solid #122612;
+  display: flex; align-items: center; padding: 0 10px; gap: 8px;
+  z-index: 20; box-shadow: 0 3px 15px #000c;
+}
+.logo { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+.logo-emoji { font-size: 24px; filter: drop-shadow(0 0 8px #4a9a2a); }
+.logo-text { color: #a8e063; font-size: 14px; line-height: 1; }
+.logo-sub { color: #1a4a1a; font-size: 7px; font-family: 'Nunito', sans-serif; letter-spacing: 2px; }
+.stats { display: flex; gap: 6px; flex: 1; justify-content: center; flex-wrap: wrap; }
+.stat-box { background: #ffffff06; border-radius: 8px; padding: 2px 9px; text-align: center; }
+.stat-label { font-size: 7px; font-family: 'Nunito', sans-serif; color: #2a4a2a; }
+.stat-val { font-size: 12px; line-height: 1.1; }
+.harvest-badge { background: #aa440088; border: 2px solid #ff8800; border-radius: 8px; padding: 2px 9px; text-align: center; animation: pulse .65s infinite; box-shadow: 0 0 14px #ff880077; display: none; }
+.harvest-badge.show { display: block; }
+.harvest-label { color: #ffcc88; font-size: 7px; font-family: 'Nunito', sans-serif; }
+.harvest-count { color: #fff; font-size: 15px; line-height: 1; }
+.fs-btn { background: #0a1a0a; border: 1px solid #2a5a2a; border-radius: 7px; color: #7ab05a; font-size: 11px; padding: 5px 10px; font-family: 'Fredoka One', cursive; cursor: pointer; flex-shrink: 0; transition: all .15s; }
+.fs-btn:hover { filter: brightness(1.3); }
+.fs-btn.active { background: #1a3a0a; border-color: #5aaa2a; box-shadow: 0 0 12px #4a9a2a55; }
+
+/* BODY */
+#body { flex: 1; display: flex; overflow: hidden; min-height: 0; }
+
+/* LEFT */
+#left { width: 220px; flex-shrink: 0; background: #040e04; border-right: 2px solid #0f200f; display: flex; flex-direction: column; overflow: hidden; }
+.tab-bar { display: flex; border-bottom: 1px solid #0f200f; flex-shrink: 0; }
+.tab-btn { flex: 1; padding: 8px 2px; background: transparent; border: none; border-bottom: 2px solid transparent; color: #265226; font-size: 10px; font-family: 'Fredoka One', cursive; cursor: pointer; transition: all .15s; }
+.tab-btn.active { background: #091509; color: #a8e063; border-bottom-color: #a8e063; }
+.tab-btn:hover { filter: brightness(1.3); }
+.sidebar-scroll { flex: 1; overflow-y: auto; padding: 4px 5px; }
+.section-title { color: #1a3a1a; font-size: 7px; font-family: 'Nunito', sans-serif; font-weight: 800; letter-spacing: 1.5px; padding: 3px 2px 5px; text-transform: uppercase; }
+.seed-btn { width: 100%; margin-bottom: 3px; background: #060f06; border: 2px solid #0f200f; border-radius: 7px; padding: 4px 6px; display: flex; align-items: center; gap: 5px; cursor: pointer; transition: transform .12s, filter .12s; text-align: left; opacity: 0.38; }
+.seed-btn.affordable { opacity: 1; }
+.seed-btn.selected { box-shadow: 0 0 12px #365e3655; }
+.seed-btn:hover { filter: brightness(1.2); transform: translateX(2px); }
+.seed-emoji { font-size: 17px; flex-shrink: 0; }
+.seed-info { flex: 1; overflow: hidden; min-width: 0; }
+.seed-name { font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seed-cost { color: #997700; font-size: 8px; font-family: 'Nunito', sans-serif; }
+.seed-right { text-align: right; flex-shrink: 0; }
+.seed-reward { color: #4a9a3a; font-size: 8px; font-family: 'Nunito', sans-serif; }
+.seed-rarity { font-size: 6px; font-family: 'Nunito', sans-serif; font-weight: 800; text-transform: uppercase; border-radius: 3px; padding: 1px 3px; }
+.tier-title { color: #1a3a1a; font-size: 7px; font-family: 'Nunito', sans-serif; font-weight: 800; letter-spacing: 1px; padding: 4px 2px 2px; text-transform: uppercase; border-top: 1px solid #0f200f; margin-top: 4px; }
+.tier-title:first-child { border-top: none; margin-top: 0; }
+.upg-card { background: #040e04; border: 2px solid #0d1f0d; border-radius: 7px; padding: 5px 7px; margin-bottom: 2px; cursor: not-allowed; opacity: 0.32; transition: all .15s; }
+.upg-card.affordable { cursor: pointer; opacity: 1; }
+.upg-card.affordable:hover { transform: translateY(-2px); filter: brightness(1.2); }
+.upg-card.owned { background: #091509; border-color: #1e4a1e; cursor: default; opacity: 1; }
+.upg-inner { display: flex; align-items: center; gap: 5px; }
+.upg-icon { font-size: 14px; }
+.upg-name { font-size: 9px; }
+.upg-desc { color: #1e3e1e; font-size: 7px; font-family: 'Nunito', sans-serif; }
+.upg-cost { color: #997700; font-size: 8px; font-family: 'Nunito', sans-serif; }
+.upg-check { font-size: 12px; }
+
+/* CENTER */
+#center { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+.panel-bar { display: flex; border-bottom: 2px solid #0f200f; background: #040e04; flex-shrink: 0; }
+.panel-btn { padding: 8px 16px; background: transparent; border: none; border-bottom: 3px solid transparent; color: #265226; font-size: 11px; font-family: 'Fredoka One', cursive; cursor: pointer; transition: all .15s; position: relative; }
+.panel-btn.active { background: #091509; color: #a8e063; border-bottom-color: #a8e063; }
+.panel-btn:hover { filter: brightness(1.3); }
+.panel-dot { position: absolute; top: 3px; right: 4px; background: #ff5500; border-radius: 50%; width: 6px; height: 6px; animation: pulse .7s infinite; display: none; }
+.panel-dot.show { display: block; }
+
+/* FARM */
+#farmPanel { flex: 1; overflow: auto; padding: 8px 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.sel-bar { display: flex; align-items: center; gap: 8px; background: #060f06; border-radius: 9px; padding: 6px 12px; width: 100%; max-width: 660px; flex-shrink: 0; }
+.sel-emoji { font-size: 22px; }
+.sel-name { font-size: 13px; }
+.sel-stats { color: #1e4e1e; font-size: 9px; font-family: 'Nunito', sans-serif; display: flex; gap: 10px; flex-wrap: wrap; margin-top: 1px; }
+.sel-hint { color: #1a3a1a; font-size: 8px; font-family: 'Nunito', sans-serif; text-align: right; flex-shrink: 0; }
+#plotGrid { display: grid; gap: 6px; width: 100%; }
+.plot-btn { aspect-ratio: 1; background: radial-gradient(circle at 50% 65%,#190e00,#0e0800); border: 2px dashed #190e00; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; cursor: pointer; transition: transform .12s cubic-bezier(.34,1.56,.64,1); }
+.plot-btn:hover { transform: scale(1.1) translateY(-3px); z-index: 2; }
+.plot-btn:active { transform: scale(0.92); }
+.plot-empty-icon { font-size: 14px; opacity: 0.1; }
+.plot-empty-text { color: #190e00; font-size: 7px; font-family: 'Nunito', sans-serif; opacity: 0.4; }
+.plot-plant { font-size: 22px; z-index: 1; animation: sway 2.5s ease-in-out infinite; }
+.plot-plant.ready { font-size: 32px; animation: bounce .65s infinite; }
+.plot-bar-wrap { width: 74%; height: 3px; background: #040e04; border-radius: 2px; margin-top: 2px; overflow: hidden; }
+.plot-bar { height: 100%; border-radius: 2px; transition: width .9s ease; }
+.plot-pct { color: #1a3a1a; font-size: 7px; font-family: 'Nunito', sans-serif; margin-top: 1px; }
+.plot-ready-text { font-size: 9px; font-family: 'Nunito', sans-serif; font-weight: 700; z-index: 1; }
+.shimmer-overlay { position: absolute; inset: 0; pointer-events: none; background-size: 200% auto; animation: shimmer 1.8s linear infinite; }
+.farm-stats { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; flex-shrink: 0; }
+.farm-stat { background: #060f06; border: 1px solid #0f200f; border-radius: 7px; padding: 3px 10px; text-align: center; }
+.farm-stat-label { color: #1a3a1a; font-size: 7px; font-family: 'Nunito', sans-serif; }
+.farm-stat-val { font-size: 13px; }
+
+/* SELL */
+#sellPanel { flex: 1; overflow: auto; padding: 10px 14px; display: none; }
+#sellPanel.active { display: block; }
+.sell-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; flex-wrap: wrap; gap: 7px; }
+.sell-title { color: #a8e063; font-size: 16px; }
+.sell-sub { color: #1e4e1e; font-size: 9px; font-family: 'Nunito', sans-serif; }
+.sell-all-btn { background: linear-gradient(135deg,#193509,#0d2a06); border: 2px solid #4aaa2a; border-radius: 8px; color: #a8e063; font-size: 11px; padding: 6px 14px; font-family: 'Fredoka One', cursive; cursor: pointer; transition: all .15s; }
+.sell-all-btn:hover { filter: brightness(1.2); transform: scale(1.05); }
+.sell-empty { text-align: center; padding: 50px 20px; }
+.sell-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(185px, 1fr)); gap: 8px; }
+.sell-card { border-radius: 10px; padding: 9px 11px; animation: fadeIn .2s ease; }
+.sell-card-top { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; }
+.sell-card-emoji { font-size: 26px; }
+.sell-card-name { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sell-card-badge { border-radius: 4px; padding: 1px 5px; font-size: 7px; font-family: 'Nunito', sans-serif; font-weight: 800; color: #fff; display: inline-block; margin-top: 2px; }
+.sell-prices { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 8px; font-family: 'Nunito', sans-serif; color: #1e4e1e; }
+.sell-btns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3px; }
+.sell-qty-btn { background: #060f06; border-radius: 5px; padding: 4px 2px; font-size: 9px; font-family: 'Fredoka One', cursive; cursor: pointer; border: none; transition: all .12s; text-align: center; }
+.sell-qty-btn:hover { filter: brightness(1.2); transform: scale(1.05); }
+.sell-qty-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+.sell-qty-sub { font-size: 7px; font-family: 'Nunito', sans-serif; color: #997700; }
+
+/* BUY */
+#buyPanel { flex: 1; overflow: auto; padding: 10px 14px; display: none; }
+#buyPanel.active { display: block; }
+.buy-header { margin-bottom: 9px; }
+.buy-title { color: #a8e063; font-size: 16px; }
+.buy-sub { color: #1e4e1e; font-size: 9px; font-family: 'Nunito', sans-serif; }
+.buy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.buy-card { border-radius: 11px; padding: 10px 12px; position: relative; overflow: hidden; }
+.buy-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.buy-card-emoji { font-size: 30px; }
+.buy-card-name { font-size: 14px; }
+.buy-card-rarity { display: inline-block; border-radius: 3px; padding: 1px 6px; font-size: 7px; font-family: 'Nunito', sans-serif; font-weight: 800; text-transform: uppercase; margin-top: 2px; }
+.buy-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 8px; }
+.buy-stat { background: #ffffff06; border-radius: 5px; padding: 3px 6px; }
+.buy-stat-label { color: #1a3a1a; font-size: 7px; font-family: 'Nunito', sans-serif; }
+.buy-stat-val { font-size: 11px; }
+.buy-select-btn { width: 100%; border-radius: 7px; padding: 6px; font-size: 10px; font-family: 'Fredoka One', cursive; cursor: pointer; border: none; transition: all .12s; }
+.buy-select-btn:hover:not(:disabled) { filter: brightness(1.2); transform: scale(1.02); }
+.buy-select-btn:disabled { cursor: not-allowed; }
+
+/* RIGHT */
+#right { width: 180px; flex-shrink: 0; background: #040e04; border-left: 2px solid #0f200f; display: flex; flex-direction: column; overflow: hidden; }
+.right-header { padding: 8px 8px 6px; border-bottom: 1px solid #0f200f; color: #1a3a1a; font-size: 7px; font-family: 'Nunito', sans-serif; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; }
+#rightContent { flex: 1; overflow-y: auto; padding: 8px; }
+.detail-card { border-radius: 10px; padding: 10px; }
+.detail-emoji { font-size: 40px; text-align: center; display: block; }
+.detail-name { font-size: 14px; text-align: center; margin-top: 2px; }
+.detail-rarity { display: inline-block; border-radius: 3px; padding: 1px 8px; font-size: 7px; font-family: 'Nunito', sans-serif; font-weight: 800; text-transform: uppercase; }
+.detail-center { text-align: center; margin-bottom: 8px; }
+.detail-row { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px solid #0f200f; }
+.detail-row-label { color: #1e3e1e; font-size: 8px; font-family: 'Nunito', sans-serif; }
+.detail-row-val { font-size: 9px; font-family: 'Nunito', sans-serif; font-weight: 700; }
+.right-hint { color: #0f200f; font-size: 9px; font-family: 'Nunito', sans-serif; text-align: center; padding: 12px 4px; line-height: 1.6; }
+.rarity-list { border-top: 1px solid #0f200f; padding-top: 8px; margin-top: 2px; }
+.rarity-title { color: #1a3a1a; font-size: 7px; font-family: 'Nunito', sans-serif; font-weight: 800; letter-spacing: 1px; margin-bottom: 5px; text-transform: uppercase; }
+.rarity-item { display: flex; align-items: center; gap: 5px; margin-bottom: 3px; }
+.rarity-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.rarity-label { font-size: 9px; font-family: 'Nunito', sans-serif; }
+.tips-list { border-top: 1px solid #0f200f; padding-top: 8px; margin-top: 4px; }
+.tip { color: #1a3a1a; font-size: 7px; font-family: 'Nunito', sans-serif; margin-bottom: 3px; line-height: 1.4; }
+</style>
+</head>
+<body>
+
+<div id="floatContainer" class="float-text"></div>
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <div class="logo">
+    <span class="logo-emoji">🌾</span>
+    <div>
+      <div class="logo-text">Grow a Garden</div>
+      <div class="logo-sub">BAHÇE SİMÜLATÖRÜ</div>
+    </div>
+  </div>
+  <div class="stats" id="statsBar"></div>
+  <div class="harvest-badge" id="harvestBadge">
+    <div class="harvest-label">✨ HASAT</div>
+    <div class="harvest-count" id="harvestCount">0</div>
+  </div>
+  <button class="fs-btn" id="fsBtn" onclick="toggleFS()">⊞ Tam Ekran</button>
+</div>
+
+<!-- BODY -->
+<div id="body">
+  <!-- LEFT -->
+  <div id="left">
+    <div class="tab-bar">
+      <button class="tab-btn active" id="tabSeeds" onclick="switchLeftTab('seeds')">🌱 Tohumlar</button>
+      <button class="tab-btn" id="tabUpgrades" onclick="switchLeftTab('upgrades')">⚡ Geliştir</button>
+    </div>
+    <div class="sidebar-scroll" id="leftScroll"></div>
+  </div>
+
+  <!-- CENTER -->
+  <div id="center">
+    <div class="panel-bar">
+      <button class="panel-btn active" id="pbFarm" onclick="switchPanel('farm')">🌿 Tarla</button>
+      <button class="panel-btn" id="pbSell" onclick="switchPanel('sell')">🏪 Satış<span class="panel-dot" id="sellDot"></span></button>
+      <button class="panel-btn" id="pbBuy" onclick="switchPanel('buy')">🛒 Mağaza</button>
+    </div>
+    <div id="farmPanel">
+      <div class="sel-bar" id="selBar"></div>
+      <div id="plotGrid"></div>
+      <div class="farm-stats" id="farmStats"></div>
+    </div>
+    <div id="sellPanel"></div>
+    <div id="buyPanel"></div>
+  </div>
+
+  <!-- RIGHT -->
+  <div id="right">
+    <div class="right-header">Bitki Detayı</div>
+    <div id="rightContent"></div>
+  </div>
+</div>
+
+<script>
+const PLANTS = [
+  {id:"carrot",    name:"Havuç",          emoji:"🥕",cost:10,      growTime:12,   reward:20,      rarity:"common"},
+  {id:"tomato",   name:"Domates",        emoji:"🍅",cost:50,      growTime:22,   reward:95,      rarity:"common"},
+  {id:"corn",     name:"Mısır",          emoji:"🌽",cost:200,     growTime:40,   reward:380,     rarity:"common"},
+  {id:"pepper",   name:"Biber",          emoji:"🫑",cost:800,     growTime:65,   reward:1500,    rarity:"common"},
+  {id:"mushroom", name:"Mantar",         emoji:"🍄",cost:3000,    growTime:100,  reward:5600,    rarity:"uncommon"},
+  {id:"strawberry",name:"Çilek",        emoji:"🍓",cost:12000,   growTime:150,  reward:22000,   rarity:"uncommon"},
+  {id:"blueberry",name:"Yaban Mersini",  emoji:"🫐",cost:50000,   growTime:220,  reward:92000,   rarity:"uncommon"},
+  {id:"watermelon",name:"Karpuz",       emoji:"🍉",cost:200000,  growTime:320,  reward:370000,  rarity:"uncommon"},
+  {id:"pear",     name:"Armut",          emoji:"🍐",cost:800000,  growTime:460,  reward:1500000, rarity:"rare"},
+  {id:"peach",    name:"Şeftali",        emoji:"🍑",cost:3500000, growTime:650,  reward:6500000, rarity:"rare"},
+  {id:"apple",    name:"Elma",           emoji:"🍎",cost:15000000,growTime:900,  reward:28000000,rarity:"rare"},
+  {id:"orange",   name:"Portakal",       emoji:"🍊",cost:70000000,growTime:1250, reward:130000000,rarity:"rare"},
+  {id:"lemon",    name:"Limon",          emoji:"🍋",cost:3e8,     growTime:1700, reward:5.5e8,   rarity:"epic"},
+  {id:"grape",    name:"Üzüm",           emoji:"🍇",cost:1.5e9,   growTime:2300, reward:2.8e9,   rarity:"epic"},
+  {id:"mango",    name:"Mango",          emoji:"🥭",cost:7e9,     growTime:3100, reward:1.3e10,  rarity:"epic"},
+  {id:"pineapple",name:"Ananas",         emoji:"🍍",cost:3.5e10,  growTime:4200, reward:6.5e10,  rarity:"epic"},
+  {id:"cherry",   name:"Kiraz",          emoji:"🍒",cost:2e11,    growTime:5600, reward:3.7e11,  rarity:"legendary"},
+  {id:"kiwi",     name:"Kivi",           emoji:"🥝",cost:1.2e12,  growTime:7500, reward:2.2e12,  rarity:"legendary"},
+  {id:"coconut",  name:"Hindistancevizi",emoji:"🥥",cost:7e12,    growTime:10000,reward:1.3e13,  rarity:"legendary"},
+  {id:"dragon",   name:"Ejder Meyvesi",  emoji:"🐉",cost:5e13,    growTime:14000,reward:9.5e13,  rarity:"legendary"},
+];
+const RARITY = {
+  common:    {bg:"#0c170c",border:"#365e36",label:"#7ab05a",text:"Sıradan"},
+  uncommon:  {bg:"#0c1717",border:"#2a7060",label:"#4dd0c4",text:"Yaygın"},
+  rare:      {bg:"#0c0c17",border:"#3a5aaa",label:"#7aaaff",text:"Nadir"},
+  epic:      {bg:"#170c17",border:"#8a3aaa",label:"#d070ff",text:"Efsanevi"},
+  legendary: {bg:"#17170c",border:"#aaaa00",label:"#ffee00",text:"Mitik"},
+};
+const UPGRADES = [
+  {id:"watering",   name:"Sulama Borusu", desc:"Büyüme 2× hızlı",   cost:2000,   icon:"💧",tier:1,type:"speed"},
+  {id:"fertilizer", name:"Organik Gübre", desc:"Hasat 1.5× fazla",  cost:8000,   icon:"🌿",tier:1,type:"reward"},
+  {id:"extraplots", name:"+4 Tarla",      desc:"4 ek tarla",        cost:15000,  icon:"🟫",tier:1,type:"plot"},
+  {id:"tools",      name:"Çelik Aletler", desc:"Büyüme 2× hızlı",   cost:80000,  icon:"⚒️",tier:2,type:"speed"},
+  {id:"greenhouse", name:"Cam Sera",      desc:"Hasat 1.5× fazla",  cost:300000, icon:"🏡",tier:2,type:"reward"},
+  {id:"extraplots2",name:"+4 Daha Tarla", desc:"4 daha fazla",      cost:600000, icon:"🟤",tier:2,type:"plot"},
+  {id:"irrigation", name:"Damla Sulama",  desc:"Büyüme 2× hızlı",   cost:3000000,icon:"🌊",tier:3,type:"speed"},
+  {id:"superfert",  name:"Süper Gübre",   desc:"Hasat 1.5× fazla",  cost:1.2e7,  icon:"✨",tier:3,type:"reward"},
+  {id:"autofarmer", name:"Çiftçi Robotu", desc:"Otomatik hasat",    cost:8000000,icon:"🤖",tier:3,type:"auto"},
+  {id:"drone",      name:"Tarım Dronu",   desc:"Büyüme 2× hızlı",   cost:8e7,    icon:"🚁",tier:4,type:"speed"},
+  {id:"goldsoil",   name:"Altın Toprak",  desc:"Hasat 1.5× fazla",  cost:3e8,    icon:"🌟",tier:4,type:"reward"},
+  {id:"extraplots3",name:"+4 Mega Tarla", desc:"4 daha fazla",      cost:1.5e8,  icon:"⬛",tier:4,type:"plot"},
+];
+const SELL_MULT = 0.75, BASE_PLOTS = 12;
+const TIER_LABELS = {1:"⭐ Temel",2:"⭐⭐ Gelişmiş",3:"⭐⭐⭐ İleri",4:"⭐⭐⭐⭐ Üstat"};
+const TYPE_COLORS = {speed:"#4dd0c4",reward:"#d070ff",plot:"#a07040",auto:"#ffaa44"};
+
+let state = {
+  coins: 10, total: 10,
+  inv: {}, plots: Array(BASE_PLOTS).fill(null),
+  selId: "carrot", ups: {},
+  leftTab: "seeds", panel: "farm",
+  tick: 0, floatId: 0,
+};
+
+function fmt(n) {
+  if(n>=1e12) return (n/1e12).toFixed(2)+"T";
+  if(n>=1e9)  return (n/1e9).toFixed(2)+"B";
+  if(n>=1e6)  return (n/1e6).toFixed(2)+"M";
+  if(n>=1000) return (n/1000).toFixed(1)+"K";
+  return Math.floor(n).toString();
+}
+function fmtTime(s) {
+  s=Math.round(s);
+  if(s>=3600) return `${Math.floor(s/3600)}sa ${Math.floor((s%3600)/60)}dk`;
+  if(s>=60)   return `${Math.floor(s/60)}dk ${s%60}s`;
+  return `${s}s`;
+}
+function spd() { return ["watering","tools","irrigation","drone"].reduce((a,id)=>a*(state.ups[id]?2:1),1); }
+function rew() { return ["fertilizer","greenhouse","superfert","goldsoil"].reduce((a,id)=>a*(state.ups[id]?1.5:1),1); }
+function plotCount() { return BASE_PLOTS+(state.ups.extraplots?4:0)+(state.ups.extraplots2?4:0)+(state.ups.extraplots3?4:0); }
+function selPlant() { return PLANTS.find(p=>p.id===state.selId); }
+function invCount() { return Object.values(state.inv).reduce((a,b)=>a+b,0); }
+function invValue() {
+  return Object.entries(state.inv).reduce((t,[id,cnt])=>{
+    const pl=PLANTS.find(p=>p.id===id);
+    return t+(pl?Math.floor(pl.reward*SELL_MULT*rew()*cnt):0);
+  },0);
+}
+
+function addFloat(text, x, y, color, big) {
+  const el = document.createElement("div");
+  el.className = "float-item";
+  el.style.left = x+"px"; el.style.top = y+"px";
+  el.style.color = color||"#7fff00";
+  el.style.fontSize = big?"24px":"16px";
+  el.textContent = text;
+  document.getElementById("floatContainer").appendChild(el);
+  setTimeout(()=>el.remove(), 1500);
+}
+
+function switchLeftTab(tab) {
+  state.leftTab = tab;
+  document.getElementById("tabSeeds").classList.toggle("active", tab==="seeds");
+  document.getElementById("tabUpgrades").classList.toggle("active", tab==="upgrades");
+  renderLeft();
+}
+function switchPanel(panel) {
+  state.panel = panel;
+  ["farm","sell","buy"].forEach(p => {
+    document.getElementById("pb"+p.charAt(0).toUpperCase()+p.slice(1)).classList.toggle("active", p===panel);
+    const el = document.getElementById(p+"Panel");
+    if(el) { el.style.display = p===panel ? (p==="farm"?"flex":"block") : "none"; }
+  });
+  if(panel==="sell") renderSell();
+  if(panel==="buy")  renderBuy();
+}
+
+function renderLeft() {
+  const el = document.getElementById("leftScroll");
+  if(state.leftTab==="seeds") {
+    let html = `<div class="section-title">Bitki seç ve tarlana ek</div>`;
+    PLANTS.forEach(p => {
+      const rc = RARITY[p.rarity];
+      const sel = state.selId===p.id;
+      const affordable = state.coins>=p.cost;
+      const il = p.rarity==="legendary";
+      const bg = sel ? (il ? `linear-gradient(90deg,${rc.bg},#161605,${rc.bg})` : rc.bg) : "#060f06";
+      html += `<button class="seed-btn${affordable?" affordable":""}${sel?" selected":""}"
+        style="background:${bg};border-color:${sel?rc.border:"#0f200f"};${sel?`box-shadow:0 0 12px ${rc.border}55;`:""}"
+        onclick="selectPlant('${p.id}')"
+        onmouseenter="showHover('${p.id}')" onmouseleave="clearHover()">
+        <span class="seed-emoji">${p.emoji}</span>
+        <div class="seed-info">
+          <div class="seed-name" style="color:${sel?rc.label:"#3a6a3a"}">${p.name}</div>
+          <div class="seed-cost">🪙${fmt(p.cost)}</div>
+        </div>
+        <div class="seed-right">
+          <div class="seed-reward">+${fmt(p.reward)}</div>
+          <div class="seed-rarity" style="color:${rc.label};background:${rc.border}33">${p.rarity[0].toUpperCase()}</div>
+        </div>
+      </button>`;
+    });
+    el.innerHTML = html;
+  } else {
+    let html = "";
+    [1,2,3,4].forEach(tier => {
+      html += `<div class="tier-title">${TIER_LABELS[tier]}</div>`;
+      UPGRADES.filter(u=>u.tier===tier).forEach(u => {
+        const owned = state.ups[u.id];
+        const affordable = !owned && state.coins>=u.cost;
+        const tc = TYPE_COLORS[u.type]||"#7ab05a";
+        html += `<div class="upg-card${owned?" owned":affordable?" affordable":""}"
+          onclick="buyUpgrade('${u.id}')">
+          <div class="upg-inner">
+            <span class="upg-icon">${u.icon}</span>
+            <div style="flex:1">
+              <div class="upg-name" style="color:${owned?tc:"#4a7a4a"}">${u.name}</div>
+              <div class="upg-desc">${u.desc}</div>
+            </div>
+            ${owned ? `<span class="upg-check" style="color:${tc}">✓</span>` : `<div class="upg-cost">🪙${fmt(u.cost)}</div>`}
+          </div>
+        </div>`;
+      });
+    });
+    el.innerHTML = html;
+  }
+}
+
+function renderSelBar() {
+  const pl = selPlant(); if(!pl) return;
+  const rc = RARITY[pl.rarity];
+  document.getElementById("selBar").style.border = `2px solid ${rc.border}`;
+  document.getElementById("selBar").style.boxShadow = `0 0 15px ${rc.border}33`;
+  document.getElementById("selBar").innerHTML = `
+    <span class="sel-emoji">${pl.emoji}</span>
+    <div style="flex:1">
+      <div class="sel-name" style="color:${rc.label}">${pl.name}</div>
+      <div class="sel-stats">
+        <span>Maliyet: <span style="color:#997700">🪙${fmt(pl.cost)}</span></span>
+        <span>Süre: <span style="color:#7aaa7a">⏱${fmtTime(pl.growTime/spd())}</span></span>
+        <span>Hasat: <span style="color:#4a9a3a">+${fmt(Math.floor(pl.reward*rew()))}🪙</span></span>
+      </div>
+    </div>
+    <div class="sel-hint">Boş toprak→tıkla<br><span style="color:#1e4e1e">Parlayınca→hasat</span></div>`;
+}
+
+function renderGrid() {
+  const pc = plotCount();
+  const gc = pc<=12?4:5;
+  const maxW = gc*120+(gc-1)*6+24;
+  const grid = document.getElementById("plotGrid");
+  grid.style.gridTemplateColumns = `repeat(${gc},1fr)`;
+  grid.style.maxWidth = maxW+"px";
+
+  // sync plot array
+  while(state.plots.length < pc) state.plots.push(null);
+  if(state.plots.length > pc) state.plots = state.plots.slice(0,pc);
+
+  // build HTML
+  let html = "";
+  state.plots.forEach((plot, i) => {
+    const rdy = plot && plot.progress>=100;
+    const pg = plot ? plot.progress : 0;
+    const rc = plot ? RARITY[plot.rarity] : null;
+    const il = plot?.rarity==="legendary";
+    const bg = plot
+      ? (rdy ? `radial-gradient(circle at 50% 55%,${rc.border}44,#040e04)` : "radial-gradient(circle at 50% 60%,#112211,#060f06)")
+      : "radial-gradient(circle at 50% 65%,#190e00,#0e0800)";
+    const brd = rdy ? `2px solid ${rc.border}` : plot ? "2px solid #0d250d" : "2px dashed #190e00";
+    const shadow = rdy ? `0 0 22px ${rc.border}88,0 3px 12px #000a` : "0 2px 6px #0007";
+    const anim = rdy ? "animation:pulse .8s infinite" : "";
+
+    html += `<button class="plot-btn" style="background:${bg};border:${brd};box-shadow:${shadow};${anim}" onclick="clickPlot(${i},event)">`;
+    if(!plot) {
+      html += `<div class="plot-empty-icon">🌿</div><div class="plot-empty-text">Boş</div>`;
+    } else {
+      if(rdy && il) html += `<div class="shimmer-overlay" style="background:linear-gradient(135deg,transparent 25%,${rc.border}22 50%,transparent 75%)"></div>`;
+      const plantStyle = rdy ? `font-size:32px;animation:bounce .65s infinite;filter:drop-shadow(0 0 8px ${rc.border})` : "font-size:22px;animation:sway 2.5s ease-in-out infinite";
+      html += `<div style="${plantStyle};z-index:1">${rdy?plot.emoji:"🌱"}</div>`;
+      if(rdy) {
+        html += `<div class="plot-ready-text" style="color:${rc.label}">Hasat!</div>`;
+      } else {
+        const barColor = pg>80?"#7fff00":pg>50?"#a8e063":"#4a9a2a";
+        html += `<div class="plot-bar-wrap"><div class="plot-bar" style="width:${pg}%;background:${barColor}"></div></div>
+                 <div class="plot-pct">${Math.round(pg)}%</div>`;
+      }
+    }
+    html += `</button>`;
+  });
+  grid.innerHTML = html;
+}
+
+function renderFarmStats() {
+  const growing = state.plots.filter(p=>p&&p.progress<100).length;
+  const rdy = state.plots.filter(p=>p&&p.progress>=100).length;
+  const pc = plotCount();
+  const ic = invCount(); const iv = invValue();
+  document.getElementById("farmStats").innerHTML = [
+    ["🌱","Büyüyor",growing,"#7ab05a"],
+    ["✨","Hazır",rdy,"#ffaa44"],
+    ["🟫","Tarla",pc,"#a07040"],
+    ["📦","Envanter",ic,"#7aaaff"],
+    ["💰","Env.Değer",fmt(iv),"#ffd700"],
+  ].map(([icon,lbl,val,col])=>`
+    <div class="farm-stat">
+      <div class="farm-stat-label">${icon} ${lbl}</div>
+      <div class="farm-stat-val" style="color:${col}">${val}</div>
+    </div>`).join("");
+}
+
+function renderTopbar() {
+  const rdy = state.plots.filter(p=>p&&p.progress>=100).length;
+  document.getElementById("statsBar").innerHTML = [
+    {i:"🪙",l:"Altın",v:fmt(state.coins),c:"#ffd700"},
+    {i:"📦",l:"Envanter",v:invCount(),c:"#7ab0ff"},
+    {i:"⚡",l:"Hız",v:spd()+"×",c:"#a8e063"},
+    {i:"💎",l:"Ödül",v:rew().toFixed(2)+"×",c:"#d070ff"},
+    {i:"🏆",l:"Toplam",v:fmt(state.total),c:"#ffee55"},
+  ].map(s=>`<div class="stat-box" style="border:1px solid ${s.c}33">
+    <div class="stat-label">${s.i} ${s.l}</div>
+    <div class="stat-val" style="color:${s.c}">${s.v}</div>
+  </div>`).join("");
+  const badge = document.getElementById("harvestBadge");
+  badge.classList.toggle("show", rdy>0);
+  document.getElementById("harvestCount").textContent = rdy;
+  document.getElementById("sellDot").classList.toggle("show", invCount()>0);
+  document.querySelector("#pbSell").textContent = `🏪 Satış${invCount()>0?` (${invCount()})`:""} `;
+  const dot = document.createElement("span");
+  dot.className = "panel-dot"+(invCount()>0?" show":"");
+  dot.id = "sellDot";
+  // just update text
+  document.getElementById("pbSell").innerHTML = `🏪 Satış${invCount()>0?` (${invCount()})`:""}<span class="panel-dot${invCount()>0?" show":""}" id="sellDot"></span>`;
+}
+
+function renderSell() {
+  const el = document.getElementById("sellPanel");
+  const ic = invCount(); const iv = invValue();
+  let html = `<div class="sell-header">
+    <div><div class="sell-title">🏪 Satış Dükkanı</div><div class="sell-sub">Hasatlarını sat • %75 piyasa değeri</div></div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <span style="color:#ffd700;font-size:11px;font-family:Nunito">🪙${fmt(iv)}</span>
+      ${ic>0?`<button class="sell-all-btn" onclick="sellAll()">🌟 Tümünü Sat</button>`:""}
+    </div>
+  </div>`;
+  if(ic===0) {
+    html += `<div class="sell-empty"><div style="font-size:50px">🌿</div><div style="color:#1e4e1e;font-size:13px;margin-top:8px">Envanter boş</div><div style="color:#1a3a1a;font-size:9px;font-family:Nunito;margin-top:4px">Tarlana git ve hasat et!</div></div>`;
+  } else {
+    html += `<div class="sell-grid">`;
+    PLANTS.filter(p=>(state.inv[p.id]||0)>0).forEach(pl => {
+      const cnt = state.inv[pl.id]||0;
+      const p1 = Math.floor(pl.reward*SELL_MULT*rew());
+      const rc = RARITY[pl.rarity];
+      html += `<div class="sell-card" style="background:${rc.bg};border:2px solid ${rc.border};box-shadow:0 3px 10px #0008,0 0 8px ${rc.border}22">
+        <div class="sell-card-top">
+          <span class="sell-card-emoji" style="filter:drop-shadow(0 0 6px ${rc.border})">${pl.emoji}</span>
+          <div style="flex:1;min-width:0">
+            <div class="sell-card-name" style="color:${rc.label}">${pl.name}</div>
+            <div class="sell-card-badge" style="background:${rc.border}">${cnt} adet</div>
+          </div>
+        </div>
+        <div class="sell-prices">
+          <span>Birim: <span style="color:#997700">🪙${fmt(p1)}</span></span>
+          <span>Tümü: <span style="color:#ffd700">🪙${fmt(p1*cnt)}</span></span>
+        </div>
+        <div class="sell-btns">
+          ${[{l:"×1",q:1},{l:"×10",q:10},{l:"Hepsi",q:cnt}].map(({l,q})=>`
+            <button class="sell-qty-btn" style="border:1px solid ${rc.border}55;color:${rc.label}" ${cnt>=q?"":"disabled"} onclick="sellItem('${pl.id}',${q})">
+              ${l}<div class="sell-qty-sub">+${fmt(p1*Math.min(q,cnt))}</div>
+            </button>`).join("")}
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+  el.innerHTML = html;
+}
+
+function renderBuy() {
+  const el = document.getElementById("buyPanel");
+  let html = `<div class="buy-header"><div class="buy-title">🛒 Satın Al Mağazası</div><div class="buy-sub">Tohumları incele, seç, tarlana ekle!</div></div>
+  <div class="buy-grid">`;
+  PLANTS.forEach(pl => {
+    const rc = RARITY[pl.rarity]; const cb = state.coins>=pl.cost;
+    const eg = Math.round(pl.growTime/spd()); const er = Math.floor(pl.reward*rew());
+    const roi = ((er-pl.cost)/pl.cost*100).toFixed(0); const il = pl.rarity==="legendary";
+    html += `<div class="buy-card" style="background:${rc.bg};border:2px solid ${cb?rc.border:rc.border+"33"};box-shadow:${cb?`0 4px 14px #0008,0 0 12px ${rc.border}33`:"0 2px 7px #0007"};opacity:${cb?1:0.48}">
+      ${il&&cb?`<div class="shimmer-overlay" style="background:linear-gradient(135deg,transparent 30%,${rc.border}12 50%,transparent 70%)"></div>`:""}
+      <div class="buy-card-top">
+        <span class="buy-card-emoji" style="filter:${cb?`drop-shadow(0 0 8px ${rc.border})`:"none"}">${pl.emoji}</span>
+        <div>
+          <div class="buy-card-name" style="color:${rc.label}">${pl.name}</div>
+          <div class="buy-card-rarity" style="background:${rc.border}44;border:1px solid ${rc.border};color:${rc.label}">${rc.text}</div>
+        </div>
+      </div>
+      <div class="buy-stats">
+        ${[["💰 Maliyet",`🪙${fmt(pl.cost)}`,"#997700"],["⏱ Büyüme",fmtTime(eg),"#4dd0c4"],["📦 Hasat",`+${fmt(er)}`,"#4a9a3a"],["📈 ROI",`${roi}%`,parseInt(roi)>100?"#7fff00":"#4a7a4a"]].map(([lbl,v,c])=>`
+          <div class="buy-stat"><div class="buy-stat-label">${lbl}</div><div class="buy-stat-val" style="color:${c}">${v}</div></div>`).join("")}
+      </div>
+      <button class="buy-select-btn"
+        style="background:${cb?`linear-gradient(135deg,${rc.border}2a,${rc.bg})`:"#0d0d0d"};border:2px solid ${cb?rc.border:"#1a1a1a"};color:${cb?rc.label:"#222"};box-shadow:${cb?`0 2px 8px ${rc.border}44`:"none"}"
+        ${cb?"":"disabled"} onclick="selectAndGo('${pl.id}')">
+        ${cb?`✓ Seç ve Git`:`🔒 +${fmt(pl.cost-state.coins)} gerekli`}
+      </button>
+    </div>`;
+  });
+  html += `</div>`;
+  el.innerHTML = html;
+}
+
+function renderRight() {
+  // nothing to force-render unless hover
+}
+
+function showHover(id) {
+  const pl = PLANTS.find(p=>p.id===id); if(!pl) return;
+  const rc = RARITY[pl.rarity];
+  const er = Math.floor(pl.reward*rew()); const profit = er-pl.cost;
+  document.getElementById("rightContent").innerHTML = `
+    <div class="detail-card" style="background:${rc.bg};border:2px solid ${rc.border};box-shadow:0 0 16px ${rc.border}44">
+      <div class="detail-center">
+        <span class="detail-emoji" style="filter:drop-shadow(0 0 10px ${rc.border})">${pl.emoji}</span>
+        <div class="detail-name" style="color:${rc.label}">${pl.name}</div>
+        <div class="detail-rarity" style="background:${rc.border}44;border:1px solid ${rc.border};color:${rc.label}">${rc.text}</div>
+      </div>
+      ${[
+        ["💰 Maliyet",`🪙${fmt(pl.cost)}`,"#997700"],
+        ["⏱ Büyüme",fmtTime(Math.round(pl.growTime/spd())),"#4dd0c4"],
+        ["📦 Hasat",`+${fmt(er)}`,"#4a9a3a"],
+        ["💹 Kâr",`+${fmt(profit)}`,"#7fff7f"],
+        ["📈 ROI",`${(profit/pl.cost*100).toFixed(0)}%`,"#a8e063"],
+        ["🏪 Satış",`🪙${fmt(Math.floor(pl.reward*SELL_MULT*rew()))}`,"#ffd700"],
+      ].map(([l,v,c])=>`<div class="detail-row"><div class="detail-row-label">${l}</div><div class="detail-row-val" style="color:${c}">${v}</div></div>`).join("")}
+    </div>`;
+}
+
+function clearHover() {
+  document.getElementById("rightContent").innerHTML = `
+    <div class="right-hint">Sol panelde bitki üzerine gel 🌿</div>
+    <div class="rarity-list">
+      <div class="rarity-title">Nadirlik</div>
+      ${Object.entries(RARITY).map(([r,rc])=>`<div class="rarity-item"><div class="rarity-dot" style="background:${rc.border};box-shadow:0 0 4px ${rc.border}"></div><span class="rarity-label" style="color:${rc.label}">${rc.text}</span></div>`).join("")}
+    </div>
+    <div class="tips-list">
+      <div class="rarity-title">İpuçları</div>
+      ${["💡 Pahalı bitkiler uzun büyür","💡 Satış %75 fiyatla","💡 Hız gelişmeleri birleşir","💡 Oto-Çiftçi AFK kazandırır"].map(t=>`<div class="tip">${t}</div>`).join("")}
+    </div>`;
+}
+
+function selectPlant(id) {
+  state.selId = id;
+  renderLeft();
+  renderSelBar();
+}
+function selectAndGo(id) {
+  state.selId = id;
+  switchPanel("farm");
+  renderLeft();
+  renderSelBar();
+}
+
+function clickPlot(i, e) {
+  const plot = state.plots[i];
+  if(plot) {
+    if(plot.progress>=100) {
+      const earned = Math.floor(plot.reward*rew());
+      state.coins += earned; state.total += earned;
+      state.inv[plot.id] = (state.inv[plot.id]||0)+1;
+      state.plots[i] = null;
+      addFloat(`+${fmt(earned)} 🪙`, e.clientX-40, e.clientY-50, RARITY[plot.rarity].label, earned>1e6);
+      render();
+    }
+    return;
+  }
+  const pl = selPlant();
+  if(state.coins < pl.cost) { addFloat("💸 Yetersiz!", e.clientX-40, e.clientY-50, "#ff5555", false); return; }
+  state.coins -= pl.cost;
+  state.plots[i] = {...pl, progress:0};
+  render();
+}
+
+function buyUpgrade(id) {
+  const u = UPGRADES.find(x=>x.id===id);
+  if(!u || state.ups[id] || state.coins<u.cost) return;
+  state.coins -= u.cost;
+  state.ups[id] = true;
+  addFloat(`${u.icon} ${u.name}!`, window.innerWidth/2-60, 120, "#ffdd00", true);
+  render();
+}
+
+function sellItem(plantId, qty) {
+  const pl = PLANTS.find(p=>p.id===plantId); if(!pl) return;
+  const have = state.inv[plantId]||0; const sell = Math.min(qty,have); if(!sell) return;
+  const price = Math.floor(pl.reward*SELL_MULT*rew()*sell);
+  state.inv[plantId] = (state.inv[plantId]||0)-sell;
+  if(!state.inv[plantId]) delete state.inv[plantId];
+  state.coins += price; state.total += price;
+  addFloat(`+${fmt(price)} 🪙`, window.innerWidth/2, 120, "#ffd700", price>1e6);
+  renderSell(); renderTopbar(); renderFarmStats();
+}
+
+function sellAll() {
+  let total = 0;
+  Object.entries(state.inv).forEach(([id,cnt])=>{
+    const pl=PLANTS.find(p=>p.id===id); if(pl) total+=Math.floor(pl.reward*SELL_MULT*rew()*cnt);
+  });
+  state.inv = {}; state.coins += total; state.total += total;
+  if(total>0) addFloat(`🌟 +${fmt(total)} 🪙`, window.innerWidth/2-60, 120, "#ffdd00", true);
+  renderSell(); renderTopbar(); renderFarmStats();
+}
+
+function toggleFS() {
+  if(!document.fullscreenElement) {
+    document.documentElement.requestFullscreen();
+    document.getElementById("fsBtn").textContent = "⊠ Küçült";
+    document.getElementById("fsBtn").classList.add("active");
+  } else {
+    document.exitFullscreen();
+    document.getElementById("fsBtn").textContent = "⊞ Tam Ekran";
+    document.getElementById("fsBtn").classList.remove("active");
+  }
+}
+
+function render() {
+  renderTopbar();
+  renderSelBar();
+  renderGrid();
+  renderFarmStats();
+  renderLeft();
+  if(state.panel==="sell") renderSell();
+  if(state.panel==="buy")  renderBuy();
+}
+
+// Game tick
+setInterval(()=>{
+  let changed = false;
+  const s = spd();
+
+  // auto harvest
+  if(state.ups.autofarmer) {
+    state.plots = state.plots.map(p=>{
+      if(p&&p.progress>=100){
+        const earned=Math.floor(p.reward*rew());
+        state.coins+=earned; state.total+=earned;
+        state.inv[p.id]=(state.inv[p.id]||0)+1;
+        changed=true; return null;
+      }
+      return p;
+    });
+  }
+
+  // grow
+  state.plots = state.plots.map(p=>{
+    if(!p||p.progress>=100) return p;
+    changed=true;
+    return {...p, progress: Math.min(100, p.progress+(100/p.growTime)*s)};
+  });
+
+  if(changed) render();
+  else { renderTopbar(); renderFarmStats(); }
+}, 1000);
+
+// Init
+clearHover();
+switchPanel("farm");
+render();
+</script>
+</body>
+</html>
